@@ -15,7 +15,9 @@ Before deploying, ensure you have:
 ### 1. Verify Project Structure
 ```
 textblob_library/
-├── app.py                  ✅ Flask application
+├── api/
+│   └── index.py           ✅ Vercel entry point
+├── app.py                  ✅ Flask application (local dev)
 ├── spell.py                ✅ Core spell correction
 ├── typo_analyzer.py        ✅ Dataset analyzer
 ├── requirements.txt        ✅ Dependencies
@@ -41,14 +43,14 @@ Should contain:
   "version": 2,
   "builds": [
     {
-      "src": "app.py",
+      "src": "api/index.py",
       "use": "@vercel/python"
     }
   ],
   "routes": [
     {
       "src": "/(.*)",
-      "dest": "app.py"
+      "dest": "api/index.py"
     }
   ]
 }
