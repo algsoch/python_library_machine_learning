@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spell Correction - TextBlob Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 900px;
+            width: 100%;
+            padding: 40px;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+        
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+        
+        .backend-info {
+            background: #f0f4ff;
+            padding: 12px 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .backend-info strong {
+            color: #667eea;
+        }
+        
+        .input-section {
+            margin-bottom: 30px;
+        }
+        
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: #333;
+            font-size: 1.1em;
+        }
+        
+        textarea {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            font-family: inherit;
+            resize: vertical;
+            min-height: 120px;
+            transition: border-color 0.3s;
+        }
+        
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+        
+        button {
+            flex: 1;
+            padding: 15px 30px;
+            font-size: 16px;
+            font-weight: 600;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+        }
+        
+        .btn-secondary {
+            background: #f5f5f5;
+            color: #666;
+        }
+        
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+        
+        .output-section {
+            background: #f9fafb;
+            padding: 20px;
+            border-radius: 10px;
+            border: 2px solid #e0e0e0;
+            min-height: 120px;
+        }
+        
+        .output-section.has-content {
+            background: #f0fff4;
+            border-color: #86efac;
+        }
+        
+        .output-text {
+            color: #333;
+            font-size: 16px;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        
+        .placeholder {
+            color: #999;
+            font-style: italic;
+        }
+        
+        .examples {
+            margin-top: 30px;
+            padding: 20px;
+            background: #fff9e6;
+            border-radius: 10px;
+            border-left: 4px solid #fbbf24;
+        }
+        
+        .examples h3 {
+            color: #92400e;
+            margin-bottom: 10px;
+        }
+        
+        .example-item {
+            margin: 5px 0;
+            padding: 8px;
+            background: white;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        
+        .example-item:hover {
+            background: #fef3c7;
+        }
+        
+        .loading {
+            opacity: 0.6;
+            pointer-events: none;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 3px solid rgba(255,255,255,.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        /* Dataset Showcase Styles */
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+        
+        .tab {
+            padding: 12px 24px;
+            background: none;
+            border: none;
+            border-bottom: 3px solid transparent;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: 600;
+            color: #666;
+            transition: all 0.3s;
+        }
+        
+        .tab:hover {
+            color: #667eea;
+        }
+        
+        .tab.active {
+            color: #667eea;
+            border-bottom-color: #667eea;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .stat-card {
+            background: #f9fafb;
+            padding: 20px;
+            border-radius: 10px;
+            border: 2px solid #e0e0e0;
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            color: #666;
+            font-size: 0.9em;
+        }
+        
+        .sample-grid {
+            display: grid;
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .sample-item {
+            background: #f9fafb;
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #e0e0e0;
+        }
+        
+        .sample-item.match {
+            border-left-color: #10b981;
+            background: #f0fdf4;
+        }
+        
+        .sample-item.mismatch {
+            border-left-color: #ef4444;
+            background: #fef2f2;
+        }
+        
+        .sample-typo {
+            color: #ef4444;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        
+        .sample-expected {
+            color: #10b981;
+            margin-bottom: 5px;
+        }
+        
+        .sample-textblob {
+            color: #667eea;
+        }
+        
+        .accuracy-section {
+            background: #f0f4ff;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        
+        .accuracy-score {
+            font-size: 3em;
+            font-weight: bold;
+            color: #667eea;
+            margin: 10px 0;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 30px;
+            background: #e0e0e0;
+            border-radius: 15px;
+            overflow: hidden;
+            margin: 15px 0;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #10b981, #667eea);
+            transition: width 1s ease-out;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+        
+        .section-divider {
+            margin: 40px 0;
+            border-top: 2px solid #e0e0e0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>✨ Spell Correction Demo</h1>
+        <p class="subtitle">Powered by TextBlob NLP Library</p>
+        
+        <!-- About TextBlob Section -->
+        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 25px; border-radius: 15px; margin-bottom: 25px; color: white;">
+            <h2 style="margin: 0 0 15px 0; font-size: 1.8em;">📚 About TextBlob</h2>
+            <p style="margin-bottom: 15px; line-height: 1.6;">
+                <strong>TextBlob</strong> is a powerful Python library for processing textual data. It provides a simple API for 
+                diving into common natural language processing (NLP) tasks such as part-of-speech tagging, noun phrase extraction, 
+                sentiment analysis, classification, translation, and <strong>spell correction</strong>.
+            </p>
+            <div style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 10px; margin-top: 15px;">
+                <h3 style="margin: 0 0 10px 0; font-size: 1.2em;">🎯 Why TextBlob for Spell Correction?</h3>
+                <ul style="margin: 10px 0; padding-left: 20px; line-height: 1.8;">
+                    <li><strong>Context-Aware:</strong> Corrects entire phrases, not just individual words</li>
+                    <li><strong>Easy to Use:</strong> Simple API with just <code style="background: rgba(0,0,0,0.3); padding: 2px 6px; border-radius: 3px;">.correct()</code> method</li>
+                    <li><strong>Statistical Model:</strong> Uses frequency data from large text corpora</li>
+                    <li><strong>No Training Required:</strong> Works out-of-the-box with pre-trained models</li>
+                    <li><strong>Multilingual Support:</strong> Can handle multiple languages</li>
+                </ul>
+            </div>
+            <div style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 10px; margin-top: 15px;">
+                <h3 style="margin: 0 0 10px 0; font-size: 1.2em;">💼 Real-World Applications</h3>
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin-top: 10px;">
+                    <div style="background: rgba(255,255,255,0.15); padding: 12px; border-radius: 8px;">
+                        <strong>🔍 Search Engines</strong><br/>
+                        <small>Auto-correct user queries</small>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.15); padding: 12px; border-radius: 8px;">
+                        <strong>💬 Chat Applications</strong><br/>
+                        <small>Real-time message correction</small>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.15); padding: 12px; border-radius: 8px;">
+                        <strong>📧 Email Clients</strong><br/>
+                        <small>Spell check while typing</small>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.15); padding: 12px; border-radius: 8px;">
+                        <strong>🛒 E-commerce</strong><br/>
+                        <small>Improve product search</small>
+                    </div>
+                </div>
+            </div>
+            <div style="margin-top: 15px; padding: 12px; background: rgba(255,255,255,0.15); border-radius: 8px;">
+                <strong>📖 Documentation:</strong> 
+                <a href="https://textblob.readthedocs.io/" target="_blank" style="color: #fbbf24; text-decoration: none; margin-left: 10px;">
+                    Official TextBlob Docs →
+                </a>
+                <a href="https://github.com/sloria/TextBlob" target="_blank" style="color: #fbbf24; text-decoration: none; margin-left: 15px;">
+                    GitHub Repository →
+                </a>
+            </div>
+        </div>
+        
+        <div class="backend-info" id="backendInfo">
+            <strong>Backend:</strong> Loading...
+        </div>
+        
+        <div class="input-section">
+            <label for="inputText">Enter text with typos:</label>
+            <textarea 
+                id="inputText" 
+                placeholder="Type or paste text here... e.g., 'metal plate cover gcfi' or 'artric air portable'"
+            ></textarea>
+        </div>
+        
+        <div class="button-group">
+            <button class="btn-primary" onclick="correctSpelling()" id="correctBtn">
+                🔍 Correct Spelling
+            </button>
+            <button class="btn-secondary" onclick="clearAll()">
+                🗑️ Clear
+            </button>
+        </div>
+        
+        <div class="input-section">
+            <label>Corrected text:</label>
+            <div class="output-section" id="outputSection">
+                <div class="output-text placeholder" id="outputText">
+                    Corrected text will appear here...
+                </div>
+            </div>
+        </div>
+        
+        <div class="examples">
+            <h3>💡 Try these examples:</h3>
+            <div class="example-item" onclick="loadExample('metal plate cover gcfi')">
+                "metal plate cover gcfi" → metal plate cover gfci
+            </div>
+            <div class="example-item" onclick="loadExample('artric air portable')">
+                "artric air portable" → arctic air portable
+            </div>
+            <div class="example-item" onclick="loadExample('lawn mower- electic')">
+                "lawn mower- electic" → lawn mower- electric
+            </div>
+            <div class="example-item" onclick="loadExample('vynal grip strip')">
+                "vynal grip strip" → vinyl grip strip
+            </div>
+        </div>
+        
+        <div class="section-divider"></div>
+        
+        <!-- How to Use TextBlob Section -->
+        <div style="margin-top: 40px;">
+            <h2 style="color: #333; margin-bottom: 20px;">👨‍💻 How to Use TextBlob</h2>
+            
+            <div style="background: #f9fafb; padding: 25px; border-radius: 15px; border: 2px solid #e0e0e0;">
+                <h3 style="color: #667eea; margin-bottom: 15px;">📦 Installation</h3>
+                <pre style="background: #1e293b; color: #e2e8f0; padding: 15px; border-radius: 10px; overflow-x: auto; margin: 10px 0;"><code># Install TextBlob
+pip install textblob
+
+# Download the necessary corpora
+python -m textblob.download_corpora</code></pre>
+                
+                <h3 style="color: #667eea; margin-top: 25px; margin-bottom: 15px;">✍️ Basic Usage</h3>
+                <pre style="background: #1e293b; color: #e2e8f0; padding: 15px; border-radius: 10px; overflow-x: auto; margin: 10px 0;"><code>from textblob import TextBlob
+
+# Simple spell correction
+text = "I havv goood speling"
+blob = TextBlob(text)
+corrected = blob.correct()
+print(corrected)  # Output: I have good spelling
+
+# Correct search queries
+query = "metal plate cover gcfi"
+corrected_query = str(TextBlob(query).correct())
+print(corrected_query)  # Output: metal plate cover gift</code></pre>
+                
+                <h3 style="color: #667eea; margin-top: 25px; margin-bottom: 15px;">🔧 Advanced Features</h3>
+                <pre style="background: #1e293b; color: #e2e8f0; padding: 15px; border-radius: 10px; overflow-x: auto; margin: 10px 0;"><code>from textblob import TextBlob, Word
+
+# Word-level correction with suggestions
+word = Word("speling")
+print(word.spellcheck())  # [('spelling', 1.0), ...]
+
+# Get correction confidence
+suggestions = word.spellcheck()
+best_correction = suggestions[0][0]  # 'spelling'
+confidence = suggestions[0][1]  # 1.0 (100% confidence)
+
+# Batch processing
+typos = ["basemetnt", "cieling", "flourescent"]
+corrections = [str(TextBlob(typo).correct()) for typo in typos]
+print(corrections)  # ['basement', 'ceiling', 'fluorescent']</code></pre>
+                
+                <h3 style="color: #667eea; margin-top: 25px; margin-bottom: 15px;">🚀 Integration Example</h3>
+                <pre style="background: #1e293b; color: #e2e8f0; padding: 15px; border-radius: 10px; overflow-x: auto; margin: 10px 0;"><code>from textblob import TextBlob
+
+def smart_search_corrector(user_query):
+    """Correct user search queries before processing."""
+    blob = TextBlob(user_query)
+    corrected = str(blob.correct())
+    
+    # Show suggestion if different
+    if corrected != user_query:
+        print(f"Did you mean: {corrected}?")
+    
+    return corrected
+
+# Usage
+result = smart_search_corrector("lawn mower electic")
+# Output: Did you mean: lawn power electric?</code></pre>
+
+                <div style="background: #fff9e6; padding: 15px; border-radius: 10px; margin-top: 20px; border-left: 4px solid #fbbf24;">
+                    <strong style="color: #92400e;">💡 Pro Tips:</strong>
+                    <ul style="margin: 10px 0 0 0; padding-left: 20px; color: #92400e;">
+                        <li>TextBlob works best with common English words</li>
+                        <li>May struggle with brand names, technical terms, or domain-specific jargon</li>
+                        <li>Consider using a custom dictionary for specialized vocabulary</li>
+                        <li>Combine with other NLP tools (spaCy, NLTK) for best results</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        
+        <div class="section-divider"></div>
+        
+        <!-- Dataset Showcase Section -->
+        <div style="margin-top: 40px;">
+            <h2 style="color: #333; margin-bottom: 20px;">📊 Dataset Showcase</h2>
+            
+            <div class="tabs">
+                <button class="tab active" onclick="switchTab('statistics')">📈 Statistics</button>
+                <button class="tab" onclick="switchTab('samples')">🎲 Random Samples</button>
+                <button class="tab" onclick="switchTab('accuracy')">🎯 Accuracy Test</button>
+            </div>
+            
+            <!-- Statistics Tab -->
+            <div id="statistics-tab" class="tab-content active">
+                <div id="statsContent">
+                    <p style="color: #999; text-align: center;">Loading statistics...</p>
+                </div>
+            </div>
+            
+            <!-- Samples Tab -->
+            <div id="samples-tab" class="tab-content">
+                <div style="margin-bottom: 15px;">
+                    <button class="btn-primary" onclick="loadRandomSamples()" style="width: auto; padding: 10px 20px;">
+                        🎲 Load Random Samples
+                    </button>
+                    <select id="sampleCount" style="padding: 10px; border-radius: 5px; border: 2px solid #e0e0e0; margin-left: 10px;">
+                        <option value="5">5 samples</option>
+                        <option value="10" selected>10 samples</option>
+                        <option value="20">20 samples</option>
+                        <option value="30">30 samples</option>
+                    </select>
+                </div>
+                <div id="samplesContent">
+                    <p style="color: #999; text-align: center;">Click "Load Random Samples" to see examples from the dataset</p>
+                </div>
+            </div>
+            
+            <!-- Accuracy Tab -->
+            <div id="accuracy-tab" class="tab-content">
+                <div style="margin-bottom: 15px;">
+                    <button class="btn-primary" onclick="testAccuracy()" id="accuracyBtn" style="width: auto; padding: 10px 20px;">
+                        🎯 Run Accuracy Test
+                    </button>
+                    <select id="accuracySampleSize" style="padding: 10px; border-radius: 5px; border: 2px solid #e0e0e0; margin-left: 10px;">
+                        <option value="20">20 samples</option>
+                        <option value="50" selected>50 samples</option>
+                        <option value="100">100 samples</option>
+                    </select>
+                </div>
+                <div id="accuracyContent">
+                    <p style="color: #999; text-align: center;">Click "Run Accuracy Test" to test TextBlob's performance on the dataset</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="/static/main.js"></script>
+</body>
+</html>
