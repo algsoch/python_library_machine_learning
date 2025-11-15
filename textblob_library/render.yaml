@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: textblob-spell-correction
+    env: python
+    region: oregon
+    plan: free
+    branch: main
+    buildCommand: "pip install -r requirements.txt && python -m textblob.download_corpora"
+    startCommand: "gunicorn app:app"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.9.16
